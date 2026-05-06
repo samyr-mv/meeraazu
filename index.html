@@ -226,15 +226,7 @@ footer span{color:#c9a84c;}
           <span>𝕏 @meeraazu</span>
           <a href="https://x.com/meeraazu" target="_blank" style="font-size:11px;color:#1d9bf0;font-weight:600;">Follow →</a>
         </div>
-        <a class="twitter-timeline"
-           data-theme="dark"
-           data-chrome="noheader nofooter noborders transparent"
-           data-height="400"
-           data-dnt="true"
-           data-tweet-limit="3"
-           href="https://twitter.com/meeraazu">
-          Tweets by @meeraazu
-        </a>
+        <a class="twitter-timeline" data-theme="dark" href="https://twitter.com/meeraazu?ref_src=twsrc%5Etfw">Tweets by meeraazu</a>
         <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
       </div>
 
@@ -1027,6 +1019,14 @@ function pushSettingsToGitHub(settings) {
 }
 
 function loadSettingsFromGitHub() {
+  // Show local breaking news immediately
+  var localBreaking = localStorage.getItem("mz_breaking");
+  if (localBreaking) {
+    var el = document.getElementById("ticker-text");
+    if (el) el.innerHTML = localBreaking;
+  }
+  renderMorningCard();
+  // Then sync from GitHub
   fetch("https://raw.githubusercontent.com/" + GITHUB_REPO + "/main/settings.json?v=" + Date.now())
   .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
   .then(function(data) {
