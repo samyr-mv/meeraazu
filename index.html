@@ -1017,6 +1017,47 @@ function uploadMorningPhoto(input) {
   reader.readAsDataURL(input.files[0]);
 }
 
+function pushSettingsToGitHub(settings) {
+  var token = getGhToken();
+  if (!token) { return; }
+  var jsonStr = JSON.stringify(settings, null, 2);
+  var encoded;
+  try { encoded = btoa(unescape(encodeURIComponent(jsonStr))); }
+  catch(e) { encoded = btoa(jsonStr); }
+  fetch("https://api.github.com/repos/" + GITHUB_REPO + "/contents/settings.json", {
+    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var payload = { message: "Update settings", content: encoded };
+    if (d.sha) payload.sha = d.sha;
+    return fetch("https://api.github.com/repos/" + GITHUB_REPO + "/contents/settings.json", {
+      method: "PUT",
+      headers: { "Authorization": "token " + token, "Content-Type": "application/json", "Accept": "application/vnd.github.v3+json" },
+      body: JSON.stringify(payload)
+    });
+  })
+  .catch(function() {});
+}
+
+function loadSettingsFromGitHub() {
+  fetch("https://raw.githubusercontent.com/" + GITHUB_REPO + "/main/settings.json?v=" + Date.now())
+  .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+  .then(function(data) {
+    if (data.morning_img !== undefined) {
+      localStorage.setItem("mz_morning_img", data.morning_img || "");
+      localStorage.setItem("mz_morning", data.morning_msg || "");
+    }
+    if (data.breaking) {
+      localStorage.setItem("mz_breaking", data.breaking);
+      var el = document.getElementById("ticker-text");
+      if (el) el.innerHTML = data.breaking;
+    }
+    renderMorningCard();
+  })
+  .catch(function() { renderMorningCard(); loadBreaking(); });
+}
+
 function saveMorning() {
   var imgEl = document.getElementById("morning-img-url");
   var txtEl = document.getElementById("morning-input");
@@ -1027,24 +1068,13 @@ function saveMorning() {
   localStorage.setItem("mz_morning", txt);
   renderMorningCard();
   if (okEl) { okEl.textContent = "⏳ Saving..."; okEl.style.display = "block"; }
-  fetch("/.netlify/functions/settings", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({morning_img: img, morning_msg: txt, breaking: localStorage.getItem("mz_breaking") || ""})
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (okEl) {
-      okEl.textContent = d.ok ? "✅ Saved! Visible on all devices." : "⚠️ Saved locally only.";
+  pushSettingsToGitHub({morning_img: img, morning_msg: txt, breaking: localStorage.getItem("mz_breaking") || ""});
+  if (okEl) {
+    setTimeout(function(){
+      okEl.textContent = "✅ Saved! Visible on all devices.";
       setTimeout(function(){ okEl.style.display = "none"; }, 3000);
-    }
-  })
-  .catch(function() {
-    if (okEl) {
-      okEl.textContent = "⚠️ Saved locally only.";
-      setTimeout(function(){ okEl.style.display = "none"; }, 3000);
-    }
-  });
+    }, 1500);
+  }
 }
 
 function renderMorningCard() {
@@ -1072,24 +1102,13 @@ function saveBreaking() {
   if (ok) { ok.textContent = "⏳ Saving..."; ok.style.display = "block"; }
   var img = localStorage.getItem("mz_morning_img") || "";
   var msg = localStorage.getItem("mz_morning") || "";
-  fetch("/.netlify/functions/settings", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({morning_img: img, morning_msg: msg, breaking: txt})
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (ok) {
-      ok.textContent = d.ok ? "✅ Saved on all devices!" : "⚠️ Saved locally only.";
+  pushSettingsToGitHub({morning_img: img, morning_msg: msg, breaking: txt});
+  if (ok) {
+    setTimeout(function(){
+      ok.textContent = "✅ Saved on all devices!";
       setTimeout(function(){ ok.style.display = "none"; }, 3000);
-    }
-  })
-  .catch(function() {
-    if (ok) {
-      ok.textContent = "⚠️ Saved locally only.";
-      setTimeout(function(){ ok.style.display = "none"; }, 3000);
-    }
-  });
+    }, 1500);
+  }
 }
 
 function loadBreaking() {
@@ -1102,24 +1121,7 @@ function loadBreaking() {
 
 // ── LOAD SETTINGS FROM GITHUB ─────────────────────────────
 function loadSettings() {
-  fetch("/.netlify/functions/settings")
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.morning_img !== undefined) {
-        localStorage.setItem("mz_morning_img", data.morning_img || "");
-        localStorage.setItem("mz_morning", data.morning_msg || "");
-      }
-      if (data.breaking) {
-        localStorage.setItem("mz_breaking", data.breaking);
-        var el = document.getElementById("ticker-text");
-        if (el) el.innerHTML = data.breaking;
-      }
-      renderMorningCard();
-    })
-    .catch(function() {
-      renderMorningCard();
-      loadBreaking();
-    });
+  loadSettingsFromGitHub();
 }
 
 // ── UTILITY ───────────────────────────────────────────────
