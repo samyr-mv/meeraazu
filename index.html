@@ -410,6 +410,11 @@ window.onload = function() {
     if (hb) hb.textContent = bio;
     if (sb) sb.textContent = bio;
   }
+  // Hide sidebar profile card on mobile
+  if (window.innerWidth <= 768) {
+    var card = document.querySelector(".sc-profile");
+    if (card) card.style.display = "none";
+  }
   loadArticles();
   loadSettings();
 };
