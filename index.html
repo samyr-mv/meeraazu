@@ -39,8 +39,8 @@ header{background:#06101f;border-bottom:2px solid #c9a84c;padding:0 16px;height:
 .ticker{background:#c9a84c;padding:7px 16px;display:flex;align-items:center;gap:10px;overflow:hidden;}
 .ticker-badge{background:#06101f;color:#c9a84c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
 .ticker-wrap{overflow:hidden;flex:1;}
-.ticker-text{font-family:"MVWaheed","Faruma",serif;direction:rtl;font-size:13px;color:#06101f;font-weight:600;white-space:nowrap;display:inline-block;animation:ticker 25s linear infinite;}
-@keyframes ticker{0%{transform:translateX(-100%)}100%{transform:translateX(100vw)}}
+.ticker-text{font-family:"MVWaheed","Faruma",serif;direction:rtl;font-size:13px;color:#06101f;font-weight:600;white-space:nowrap;animation:ticker 20s linear infinite;}
+@keyframes ticker{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 
 #blog-page{background:#f0f0f0;min-height:100vh;width:100%;}
 .hero{background:linear-gradient(135deg,#06101f,#0c1b35);padding:28px 16px;border-bottom:2px solid #c9a84c;width:100%;}
@@ -437,7 +437,6 @@ function disable2FA() {
     <h1 class="dheadline" id="d-title"></h1>
     <div class="dmeta" id="d-meta"></div>
     <img id="d-img" class="dimg" src="" style="display:none;" alt="">
-    <div id="d-credit" style="display:none;font-family:'MVWaheed','Faruma',serif;font-size:12px;color:#888;text-align:right;direction:rtl;margin:-8px 0 14px;padding:3px 2px;">📷</div>
     <div class="dbody" id="d-body"></div>
     <div style="margin-top:20px;padding-top:12px;border-top:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <span style="font-size:12px;color:#888;font-weight:600;">Share:</span>
@@ -870,13 +869,16 @@ function openArt(id) {
   document.getElementById("d-title").textContent = a.title || "";
   document.getElementById("d-meta").textContent  = (a.date || "") + " · " + (a.cat || "") + " · Ahmed Sameer";
   var img = document.getElementById("d-img");
-  if (a.photo) { img.src = a.photo; img.style.display = "block"; }
-  else { img.style.display = "none"; }
-  var creditEl = document.getElementById("d-credit");
-  if (creditEl) {
-    if (a.credit && a.credit.trim()) { creditEl.textContent = "📷 " + a.credit; creditEl.style.display = "block"; }
-    else { creditEl.style.display = "none"; }
+  if (a.photo) {
+    img.src = a.photo; img.style.display = "block";
+    // Show photo credit if exists
+    var creditEl = document.getElementById("d-credit");
+    if (creditEl) {
+      if (a.credit) { creditEl.textContent = "📷 " + a.credit; creditEl.style.display = "block"; }
+      else { creditEl.style.display = "none"; }
+    }
   }
+  else { img.style.display = "none"; }
   var rawText = (a.bodyText || a.body || "");
   // SECURITY: sanitize — strip all HTML tags before rendering
   var safeText = rawText.replace(/<[^>]*>/g, "");
@@ -1047,19 +1049,12 @@ function publishArt() {
   var credit = document.getElementById("f-credit") ? document.getElementById("f-credit").value.trim() : "";
   if (!title || !body) { showMsg("write-err","Please fill in title and content."); return; }
   var date = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
-  var art  = {id: Date.now().toString(), title: title, bodyText: body, cat: cat, photo: photo, credit: credit, date: date};
+  var art  = {id: Date.now().toString(), title: title, bodyText: body, cat: cat, photo: photo, date: date};
   showMsg("write-ok","⏳ Publishing to all devices...");
   fetch(RAW_URL + "?v=" + Date.now())
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var ghArts = (data.articles && data.articles.length > 0) ? data.articles : [];
-      // Merge credit from local storage into GitHub articles
-      var localArts = getArts();
-      ghArts = ghArts.map(function(ga) {
-        var local = localArts.find(function(la) { return la.id === ga.id; });
-        if (local && local.credit && !ga.credit) ga.credit = local.credit;
-        return ga;
-      });
       ghArts.unshift(art);
       saveArts(ghArts);
       allArts = ghArts;
@@ -1146,7 +1141,6 @@ function saveEdit() {
   var body  = document.getElementById("f-body").value.trim();
   var cat   = document.getElementById("f-cat").value;
   var photo = document.getElementById("f-photo").value.trim();
-  var credit = document.getElementById("f-credit") ? document.getElementById("f-credit").value.trim() : "";
   if (!title || !body) { showMsg("write-err","Please fill in title and content."); return; }
   showMsg("write-ok","⏳ Saving...");
   var eid = editRecordId;
@@ -1155,13 +1149,6 @@ function saveEdit() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var arts = (data.articles && data.articles.length > 0) ? data.articles : allArts.slice();
-      // Merge credit from local storage into GitHub articles
-      var localArts = getArts();
-      arts = arts.map(function(ga) {
-        var local = localArts.find(function(la) { return la.id === ga.id; });
-        if (local && local.credit && !ga.credit) ga.credit = local.credit;
-        return ga;
-      });
       var found = false;
       for (var i = 0; i < arts.length; i++) {
         if (arts[i].id === eid) {
@@ -1183,7 +1170,7 @@ function saveEdit() {
       for (var i = 0; i < arts.length; i++) {
         if (arts[i].id === eid) {
           arts[i].title = title; arts[i].bodyText = body;
-          arts[i].cat = cat; arts[i].photo = photo; arts[i].credit = credit;
+          arts[i].cat = cat; arts[i].photo = photo;
           break;
         }
       }
