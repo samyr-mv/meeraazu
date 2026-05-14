@@ -975,7 +975,10 @@ function openArt(id) {
   }
   var sourceEl = document.getElementById("d-source");
   if (sourceEl) {
-    if (a.source && a.source.trim()) { sourceEl.textContent = "📰  މަސްދަރު: " + a.source; sourceEl.style.display = "block"; }
+    if (a.source && a.source.trim()) {
+      var sourceLabel = (a.lang === "en") ? "📰 Source: " : "📰  މަސްދަރު: ";
+      sourceEl.textContent = sourceLabel + a.source; sourceEl.style.display = "block";
+    }
     else { sourceEl.style.display = "none"; }
   }
   var rawText = (a.bodyText || a.body || "");
