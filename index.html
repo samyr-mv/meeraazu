@@ -907,7 +907,7 @@ function renderArts(arts, reset) {
   }
   if (arts.length > shownCount) {
     html += "<div style=\"text-align:center;margin:16px 0;\">" +
-      "<button type=\"button\" onclick=\"showMoreArts()\" style=\"background:#06101f;color:#e8c97a;border:2px solid #c9a84c;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;\">📚 Older Articles (" + (arts.length - shownCount) + " more)</button>" +
+      "<button type=\"button\" onclick=\"showMoreArts()\" style=\"background:#06101f;color:#e8c97a;border:2px solid #c9a84c;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;\">📚 More Articles (" + (arts.length - shownCount) + " more)</button>" +
     "</div>";
   }
   el.innerHTML = html;
