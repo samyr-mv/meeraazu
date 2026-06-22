@@ -180,7 +180,7 @@ footer span{color:#c9a84c;}
 // ── TOTP 2FA (RFC 6238 — Google Authenticator compatible) ──
 var _2FA_KEY = atob("bXpfMmZhX3NlY3JldA=="); // "mz_2fa_secret"
 var _2FA_ON  = atob("bXpfMmZhX2VuYWJsZWQ="); // "mz_2fa_enabled"
-if (location.search.includes('reset2fa=1')) { localStorage.removeItem(_2FA_KEY); localStorage.removeItem(_2FA_ON); location.href = location.pathname; }
+
   var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   s = s.toUpperCase().replace(/=+$/, "");
   var bits = 0, val = 0, out = [];
